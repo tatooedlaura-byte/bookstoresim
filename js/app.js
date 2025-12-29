@@ -834,10 +834,14 @@ function updateModalBalance() {
 }
 
 /**
- * Update global stats display (stars, bucks, level, mood)
+ * Update global stats display (cash, bucks, level, mood)
  */
 function updateGlobalStats() {
-    document.getElementById('total-stars').textContent = Math.floor(game.stars);
+    // Sync cash and stars for compatibility
+    if (game.cash !== undefined) {
+        game.stars = game.cash;
+    }
+    document.getElementById('total-stars').textContent = '$' + Math.floor(game.stars);
     document.getElementById('total-bucks').textContent = game.towerBucks;
     document.getElementById('player-level').textContent = game.level;
 
@@ -853,13 +857,6 @@ function updateGlobalStats() {
 
     // Update day counter with clock
     document.getElementById('day-counter').textContent = `Day ${game.getGameDay()} • ${game.getGameClock()}`;
-
-    // Update weather indicator
-    const currentWeather = game.getCurrentWeather();
-    if (currentWeather) {
-        document.getElementById('weather-emoji').textContent = currentWeather.emoji;
-        document.getElementById('weather-emoji').title = `${currentWeather.name} - Mood: ${currentWeather.moodEffect >= 0 ? '+' : ''}${currentWeather.moodEffect}, Visitors: ${Math.round(currentWeather.spawnEffect * 100)}%`;
-    }
 
     // Check for special visitor notifications
     if (game._newSpecialVisitor) {

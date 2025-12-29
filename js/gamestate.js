@@ -1,13 +1,20 @@
 /**
- * SimLibrary - Tiny Tower Style Game State
- * Build floors, stock books, serve readers, earn stars
+ * Bookstore Sim - Tiny Tower Style Game State
+ * Build floors, stock books, serve customers, earn cash
  */
 
 class GameState {
     constructor() {
         // Player resources
-        this.stars = 1000; // Starting currency
+        this.cash = 1000; // Starting currency (was stars)
+        this.stars = 1000; // Alias for compatibility
         this.towerBucks = 5; // Premium currency (for rushing)
+
+        // Business metrics
+        this.totalRevenue = 0;
+        this.totalExpenses = 0;
+        this.dailyRent = 50; // Daily rent expense
+        this.lastRentDay = 0;
         this.level = 1;
         this.xp = 0;
         this.xpToNextLevel = 100;
@@ -176,7 +183,7 @@ class GameState {
                    'Peterson', 'Bailey', 'Reed', 'Kelly', 'Howard', 'Ramos', 'Kim', 'Cox', 'Ward', 'Richardson']
         };
 
-        // Reader personality types with floor preferences
+        // Customer personality types with section preferences
         this.readerTypes = [
             { id: 'kid', emoji: '👧', name: 'Kid', weight: 25,
               preferredFloors: ['board_books', 'picture_books', 'early_readers', 'juvenile_series'] },
@@ -189,12 +196,13 @@ class GameState {
             { id: 'student', emoji: '🎓', name: 'Student', weight: 10,
               preferredFloors: ['science', 'technology', 'history', 'reference', 'textbooks'] }
         ];
+        this.customerTypes = this.readerTypes; // Alias for bookstore
 
-        // VIP reader types (rare, special abilities)
+        // VIP customer types (rare, special abilities)
         this.vipTypes = [
             {
-                id: 'speed_reader',
-                name: 'Speed Reader',
+                id: 'quick_buyer',
+                name: 'Quick Buyer',
                 emoji: '⚡',
                 ability: 'instant_checkout',
                 description: 'Checks out instantly!',
@@ -687,28 +695,28 @@ class GameState {
         // Staff types catalog
         this.staffTypes = [
             {
-                id: 'page',
-                name: 'Page',
-                emoji: '👤',
+                id: 'stocker',
+                name: 'Stocker',
+                emoji: '📦',
                 color: '#4CAF50',
                 hireCost: 50,
-                description: 'Entry-level staff, stocks basic books'
+                description: 'Entry-level staff, stocks shelves'
             },
             {
-                id: 'clerk',
-                name: 'Clerk',
-                emoji: '👔',
+                id: 'cashier',
+                name: 'Cashier',
+                emoji: '💵',
                 color: '#2196F3',
                 hireCost: 100,
-                description: 'Experienced staff, stocks intermediate books'
+                description: 'Handles sales and customer checkout'
             },
             {
-                id: 'librarian',
-                name: 'Librarian',
-                emoji: '👓',
+                id: 'manager',
+                name: 'Manager',
+                emoji: '👔',
                 color: '#9C27B0',
                 hireCost: 150,
-                description: 'Expert staff, stocks advanced books'
+                description: 'Oversees operations, boosts sales'
             }
         ];
 
@@ -4950,10 +4958,23 @@ class GameState {
     }
 
     /**
-     * Game tick - called frequently to update timers, readers, etc.
+     * Game tick - called frequently to update timers, customers, etc.
      */
     tick() {
         const now = Date.now();
+
+        // Check daily rent/expenses
+        const currentDay = this.getGameDay();
+        if (currentDay > this.lastRentDay) {
+            const rentDue = this.dailyRent * this.floors.length;
+            if (rentDue > 0 && this.stars >= rentDue) {
+                this.stars -= rentDue;
+                this.cash = this.stars;
+                this.totalExpenses += rentDue;
+                this._rentPaid = rentDue;
+            }
+            this.lastRentDay = currentDay;
+        }
 
         // Check floor construction completion
         this.floors.forEach(floor => {
