@@ -5316,7 +5316,7 @@ class GameState {
         this.checkIncidents();
 
         // Check for night cleaning (when day changes) - bonus deep clean
-        const currentDay = this.getGameDay();
+        // Note: currentDay already defined at start of tick()
         if (currentDay > this.lastCleanedDay) {
             this.runNightCleaning();
             this.lastCleanedDay = currentDay;
